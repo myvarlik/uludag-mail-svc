@@ -4,12 +4,6 @@ using uludag_mail_svc.Models;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
 using System.Net;
-using RestSharp;
-using static System.Net.Mime.MediaTypeNames;
-using System.Text;
-using System.IO;
-using SharpCompress.Compressors.Xz;
-using static System.Net.WebRequestMethods;
 
 namespace uludag_mail_svc
 {
