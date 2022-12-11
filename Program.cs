@@ -18,9 +18,9 @@ app.UseHttpsRedirection();
 
 app.MapGet("/apirun", () => "Api Runs");
 
-app.MapPost("/list", ResponseModel ([FromBody] ListModel listModel, MailService mailService) => mailService.GetAsync(listModel));
+app.MapPost("/list", ResponseModel ([FromBody] ListModel listModel, MailService mailService) => mailService.Get(listModel));
 app.MapGet("/send", (MailService mailService) => mailService.Gonder());
-app.MapDelete("/", ([FromQuery] string id, MailService mailService) => mailService.RemoveAsync(id));
-app.MapPost("/", ([FromBody] MailModel mailModel, MailService mailService) => mailService.CreateAsync(mailModel));
+app.MapDelete("/", ([FromQuery] string id, MailService mailService) => mailService.Remove(id));
+app.MapPost("/", ([FromBody] MailModel mailModel, MailService mailService) => mailService.Create(mailModel));
 
 app.Run();

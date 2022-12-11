@@ -26,7 +26,7 @@ namespace uludag_mail_svc
             _mailConfig = mailConfig.Value;
         }
 
-        public ResponseModel GetAsync(ListModel listModel)
+        public ResponseModel Get(ListModel listModel)
         {
             //var builder = Builders<SMSModel>.Filter;
 
@@ -59,7 +59,7 @@ namespace uludag_mail_svc
             return result;
         }
 
-        public bool CreateAsync(MailModel newmail)
+        public bool Create(MailModel newmail)
         {
             if (string.IsNullOrEmpty(newmail.mesaj))
             {
@@ -67,11 +67,11 @@ namespace uludag_mail_svc
             }
 
             newmail.eklenmeTarih = DateTime.Now;
-            _mailCollection.InsertOneAsync(newmail);
+            _mailCollection.InsertOne(newmail);
             return true;
         }
 
-        public bool RemoveAsync(string id)
+        public bool Remove(string id)
         {
             _mailCollection.DeleteOne(x => x.id == id);
             return true;
