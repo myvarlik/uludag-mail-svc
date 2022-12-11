@@ -1,1 +1,1 @@
-# uludag-mail-svc
+# uludag-mail-service

@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: uludagmailsvc
+  namespace: uludag-enerji
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    app: uludagmail
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uludagmailapp
+  namespace: uludag-enerji
+  labels:
+    app: uludagmail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uludagmail
+  template:
+    metadata:
+      labels:
+        app: uludagmail
+    spec:
+      containers:
+        - name: uludagmailapp
+          image: <IMAGE>
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: gh-regcred
