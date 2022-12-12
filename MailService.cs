@@ -86,65 +86,67 @@ namespace uludag_mail_svc
 
             foreach (var mail in mailModels)
             {
-                if (string.IsNullOrEmpty(mail.mesaj))
-                {
-                    continue;
-                }
-
-                var smtpClient = new SmtpClient()
-                {
-                    Host = _mailConfig.SmtpServer,
-                    Port = _mailConfig.Port,
-                    EnableSsl = false,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(_mailConfig.UserName, _mailConfig.Password),
-                    Timeout = 20000
-                };
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_mailConfig.From),
-                    Subject = mail.mesajBasligi,
-                    Body = mail.mesaj,
-                    IsBodyHtml = true
-                };
-
-                if (mail.kisiler != null)
-                    foreach (var kisi in mail.kisiler)
-                    {
-                        if (string.IsNullOrEmpty(kisi.mail))
-                        {
-                            continue;
-                        }
-
-                        Match Eslesme = Regex.Match(kisi.mail, "^\\S+@\\S+\\.\\S+$", RegexOptions.IgnoreCase);
-
-                        if (Eslesme.Success)
-                        {
-                            mailMessage.To.Add(kisi.mail);
-                        }
-                    }
-
-                if (mail.dosyalar != null)
-                    foreach (var file in mail.dosyalar)
-                    {
-                        var bytes = Convert.FromBase64String(file.dosya);
-                        var contents = new MemoryStream(bytes);
-
-                        Attachment attachment = new Attachment(contents, file.adi);
-                        mailMessage.Attachments.Add(attachment);
-                    }
                 try
                 {
+                    if (string.IsNullOrEmpty(mail.mesaj))
+                    {
+                        continue;
+                    }
+
+                    var smtpClient = new SmtpClient()
+                    {
+                        Host = _mailConfig.SmtpServer,
+                        Port = _mailConfig.Port,
+                        EnableSsl = false,
+                        DeliveryMethod = SmtpDeliveryMethod.Network,
+                        UseDefaultCredentials = false,
+                        Credentials = new NetworkCredential(_mailConfig.UserName, _mailConfig.Password),
+                        Timeout = 20000
+                    };
+
+                    var mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(_mailConfig.From),
+                        Subject = mail.mesajBasligi,
+                        Body = mail.mesaj,
+                        IsBodyHtml = true
+                    };
+
+                    if (mail.kisiler != null)
+                        foreach (var kisi in mail.kisiler)
+                        {
+                            if (string.IsNullOrEmpty(kisi.mail))
+                            {
+                                continue;
+                            }
+
+                            Match Eslesme = Regex.Match(kisi.mail, "^\\S+@\\S+\\.\\S+$", RegexOptions.IgnoreCase);
+
+                            if (Eslesme.Success)
+                            {
+                                mailMessage.To.Add(kisi.mail);
+                            }
+                        }
+
+                    if (mail.dosyalar != null)
+                        foreach (var file in mail.dosyalar)
+                        {
+                            var bytes = Convert.FromBase64String(file.dosya);
+                            var contents = new MemoryStream(bytes);
+
+                            Attachment attachment = new Attachment(contents, file.adi);
+                            mailMessage.Attachments.Add(attachment);
+                        }
+
                     smtpClient.Send(mailMessage);
 
                     mail.durum = 1;
                     mail.gonderilmeTarih = DateTime.Now;
                     _mailCollection.ReplaceOne(x => x.id == mail.id, mail);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    mail.hata = ex.Message;
                     mail.durum = 2;
                     _mailCollection.ReplaceOne(x => x.id == mail.id, mail);
                 }
