@@ -4,6 +4,7 @@ using uludag_mail_svc.Models;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 
 namespace uludag_mail_svc
 {
@@ -151,6 +152,68 @@ namespace uludag_mail_svc
                     _mailCollection.ReplaceOne(x => x.id == mail.id, mail);
                 }
             }
+        }
+
+        public static void TekliGonder(MailModel mail)
+        {
+            var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            var configurationRoot = builder.Build();
+            var mailConfig = new EmailConfiguration();
+            configurationRoot.GetSection("EmailConfiguration").Bind(mailConfig);
+
+            if (string.IsNullOrEmpty(mail.mesaj))
+            {
+                Task.Yield();
+                return;
+            }
+
+            var smtpClient = new SmtpClient()
+            {
+                Host = mailConfig.SmtpServer,
+                Port = mailConfig.Port,
+                EnableSsl = false,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(mailConfig.UserName, mailConfig.Password),
+                Timeout = 20000
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(mailConfig.From),
+                Subject = mail.mesajBasligi,
+                Body = mail.mesaj,
+                IsBodyHtml = true
+            };
+
+            if (mail.kisiler != null)
+                foreach (var kisi in mail.kisiler)
+                {
+                    if (string.IsNullOrEmpty(kisi.mail))
+                    {
+                        Task.Yield();
+                        continue;
+                    }
+
+                    Match Eslesme = Regex.Match(kisi.mail, "^\\S+@\\S+\\.\\S+$", RegexOptions.IgnoreCase);
+
+                    if (Eslesme.Success)
+                    {
+                        mailMessage.To.Add(kisi.mail);
+                    }
+                }
+
+            if (mail.dosyalar != null)
+                foreach (var file in mail.dosyalar)
+                {
+                    var bytes = Convert.FromBase64String(file.dosya);
+                    var contents = new MemoryStream(bytes);
+
+                    Attachment attachment = new Attachment(contents, file.adi);
+                    mailMessage.Attachments.Add(attachment);
+                }
+
+            smtpClient.Send(mailMessage);
         }
     }
 }

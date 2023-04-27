@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using uludag_mail_svc.Models;
 using uludag_mail_svc;
+using EasyNetQ;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,9 +12,20 @@ builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(
 // Add services to the container.
 builder.Services.AddSingleton<MailService>();
 
-var app = builder.Build();
+string rabbitmqConnectionString = "host=10.245.195.44:5672;virtualhost=/;username=myvarlik;password=celeron504";
+var bus = RabbitHutch.CreateBus(rabbitmqConnectionString);
+// Kuyruk oluþtur
+var queue = bus.Advanced.QueueDeclare("mail-gonder");
+// Kuyruða abone ol
+bus.Advanced.Consume(queue, (body, properties, info) =>
+{
+    var message = Encoding.UTF8.GetString(body.Span);
+    MailModel mail = System.Text.Json.JsonSerializer.Deserialize<MailModel>(message);
+    MailService.TekliGonder(mail);
+    return Task.CompletedTask;
+});
 
-// Configure the HTTP request pipeline.
+var app = builder.Build();
 
 app.UseHttpsRedirection();
 
